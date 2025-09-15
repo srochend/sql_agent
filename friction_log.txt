@@ -1,0 +1,87 @@
+### FRICTION LOG ###
+
+One of the biggest sources of friction was navigating documentation. Function specifications and examples felt fragmented:
+
+- LangChain references live on python.langchain.com.
+- LangGraph and its prebuilt utilities live on langchain-ai.github.io.
+Because of this split, a simple Google query didn’t always return the right page, and I often found myself chasing between different sites, GitHub issues, and Reddit threads. 
+This slowed down learning and made it harder to trust I was looking at the “canonical” resource.
+
+
+Another was debugging in general with LangChain
+
+- Errors often surfaced as type mismatches or vague python errors, without much context pointing back to the langchain-specific source of the problem.
+- Some errors themselves were hidden in large chunks, meaning each time required a little bit of digging
+- Even worse I came across a few silent errors
+e.g asking my summarizer node to update state["summary"] when I haven't defined a summary key within state doesn't return an error instead it just fails to update my state
+
+
+### ERROR LOG ###
+
+Issue 1: Converting SQL Query Results to dict
+
+- Issue: db.run(..., include_columns=True) returned a stringified list of dicts. Using ast.literal_eval produced a list, not a single dict, which caused key access errors (list indices must be integers or slices).
+
+- Troubleshooting: Printed the raw query output and checked its type. Confirmed that extra square brackets wrapped the dict.
+
+- Solution: Dropped the first and last chars after parsing, which allowed direct access to the dict fields like customer_info["CustomerId"].
+
+Issue 2: Defining State
+
+- Issue: State keys (customer_info, customer_id) weren’t persisting across runs, only messages were being updated.
+
+- Troubleshooting: Researched online and found a reddit thread discussing the issue https://www.reddit.com/r/LangChain/comments/1f8ui4a/tool_calling_in_langgraph_and_how_to_update_the/.
+
+- Solution: Realized that the prebuilt ToolNode I had been using only returns ToolMessage to state. By building my own tool node I could return anything I wanted to state.
+
+Issue 3: Tool call get_table_info returning confusing errors
+
+- Issue:
+
+================================ Human Message =================================
+
+Hello how many purchases have i made?
+================================== Ai Message ==================================
+Tool Calls:
+  get_table_info (call_YVni6q69VU8YQs4dWrZdgiH6)
+ Call ID: call_YVni6q69VU8YQs4dWrZdgiH6
+  Args:
+    table_name: Invoice
+================================= Tool Message =================================
+Name: get_table_info
+
+Error: ValueError("table_names {'o', 'c', 'i', 'v', 'I', 'n', 'e'} not found in database")
+ Please fix your mistakes.
+
+ - Troubleshooting: Added print statements after every step along the process and verified I was passing the correct arg and dtype - or so I thought.
+
+ - Solution: Realised I needed to pass a list of string after visiting https://python.langchain.com/api_reference/community/utilities/langchain_community.utilities.sql_database.SQLDatabase.html#langchain_community.utilities.sql_database.SQLDatabase.get_table_info
+
+ Issue 4: Langgraph view returning unconnected nodes
+
+ - Issue: graph.get_graph() was returning image_a not image_b
+
+ - Troubleshooting: At first I thought it could be an issue with the start node, maybe it's handled differently? So I added a pass node but that confirmed the issue was with my conditional function (image_c)
+
+ - Solution: I hadn't included a type hint for that conditional function. After speaking with Harrison I now understand it's this type hint which informs graph connections not the output of the functions!
+
+ # Incorrect
+def check_customer_info(state: State):
+
+ # Correct
+def check_customer_info(state: State) -> Literal["get_customer_email", "sql_model_node"]:
+
+
+### NEXT STEPS ###
+
+Had I more time what would I like to have improved/added?
+
+A big one would be some sort of payment processing node.
+I probably could've just added a line into the sql_query prompt to do it quick and dirty.
+Given the "sensitivity" of processing a payment on behalf of the customer I wanted to do it differently:
+- Rather than building the invoice withing the tool take in args for track_id etc to build invoice lines.
+- Add HITL before calling and surface these tool call args to the user so they can verify the info.
+
+I think another would be exploring the API.
+I would have liked to deploy this outside of LangGraph in a "real" UI.
+- Easy demo way: using streamlit or NiceGUI + Railway - keeps everything within python
