@@ -8,12 +8,16 @@ Because of this split, a simple Google query didn’t always return the right pa
 This slowed down learning and made it harder to trust I was looking at the “canonical” resource.
 
 
-Another was debugging in general with LangChain
+Another was debugging in general with LangGraph
 
-- Errors often surfaced as type mismatches or vague python errors, without much context pointing back to the langchain-specific source of the problem.
-- Some errors themselves were hidden in large chunks, meaning each time required a little bit of digging
-- Even worse I came across a few silent errors
+- Errors often surfaced as type mismatches or vague python errors, without much context pointing back to the LangChain-specific source of the problem.
+- I also came across a few silent errors
 e.g asking my summarizer node to update state["summary"] when I haven't defined a summary key within state doesn't return an error instead it just fails to update my state
+
+
+That being said overall this was a very easy system to get the hang of.
+- Lance Martin's tutorials were very thorough
+- I found LangGraph very intuitive
 
 
 ### ERROR LOG ###
