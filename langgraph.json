@@ -1,0 +1,13 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+      "info_agent": "./info_agent.py:graph",
+      "sql_agent": "./sql_agent.py:graph",
+      "agent": "./agent.py:graph"
+    },
+    "env": "./.env",
+    "python_version": "3.11",
+    "dependencies": [
+      "."
+    ]
+  }

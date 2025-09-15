@@ -1,6 +1,6 @@
 langgraph
-langchain-openai
+langgraph-prebuilt
+langchain-core
 langchain-community
-scikit-learn
-langgraph-checkpoint-sqlite
-python-dotenv
+langchain-openai
+langgraph-cli[inmem]
